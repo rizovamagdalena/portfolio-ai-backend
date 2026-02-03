@@ -1,0 +1,134 @@
+[
+  {
+    "id": "data-processing",
+    "name": "Macedonian Stock Exchange Data Processing System",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Automates the collection, cleaning, filtering, and storage of historical stock market data from the Macedonian Stock Exchange."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "Python, SQL, PostgreSQL, data filtering pipelines."
+      },
+      {
+        "type": "Functionality",
+        "text": "Applies configurable filters to process large volumes of financial data and stores the results in a database for efficient querying and analysis."
+      },
+      {
+        "type": "Automation",
+        "text": "Data updates are automated, enabling continuous data ingestion and reliable access for downstream analytics and visualization."
+      }
+    ]
+  },
+  {
+    "id": "mealmake",
+    "name": "MealMakeApp",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Helps users organize meals into collections and automatically generate ingredient summaries for grocery shopping."
+      },
+      {
+        "type": "Architecture",
+        "text": "Built using Onion Architecture with Web, Service, Repository, and Domain layers."
+      },
+      {
+        "type": "AI Usage",
+        "text": "Aggregates ingredients from multiple meals and sends them to the OpenAI API, which returns a structured and summarized shopping list."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "ASP.NET Core MVC, C#, OpenAI API integration."
+      }
+    ]
+  },
+  {
+    "id": "popcornpass",
+    "name": "PopcornPass Cinema Booking System",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Allows cinema staff to manage movies and screenings, and users to browse movies, view screening schedules, select seats, and book tickets online."
+      },
+      {
+        "type": "Architecture",
+        "text": "Full-stack ASP.NET Core MVC web application with modular design for admin and user roles."
+      },
+      {
+        "type": "AI Usage",
+        "text": "Includes a chatbot feature to assist users with movie-related information."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "ASP.NET Core MVC, C#, HTML, CSS, JavaScript."
+      }
+    ]
+  },
+  {
+    "id": "movies-api",
+    "name": "MoviesAPI",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Provides API endpoints to manage movies, users, screenings, and ticket bookings for the PopcornPass cinema application."
+      },
+      {
+        "type": "Architecture",
+        "text": "RESTful ASP.NET Core Web API with PostgreSQL database and Dapper for data access."
+      },
+      {
+        "type": "AI Usage",
+        "text": "Includes experimental RAG-based chatbot service for querying movie-related data."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "ASP.NET Core, C#, PostgreSQL, Dapper, JSON serialization."
+      }
+    ]
+  },
+  {
+    "id": "stylecast",
+    "name": "Weather & Wardrobe (StyleCast)",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Generates clothing recommendations based on real-time weather data and user preferences."
+      },
+      {
+        "type": "Architecture",
+        "text": "FastAPI backend orchestrating multiple AI models."
+      },
+      {
+        "type": "AI Usage",
+        "text": "Uses multiple generative AI models for text and image generation with fallback logic to ensure reliability."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "Python, FastAPI, ChromaDB, vector embeddings, generative AI models."
+      }
+    ]
+  },
+  {
+    "id": "mypawdiary",
+    "name": "MyPawDiary",
+    "chunks": [
+      {
+        "type": "Purpose",
+        "text": "Helps pet owners manage pets, track daily activities and events, and interact socially with other users."
+      },
+      {
+        "type": "Architecture",
+        "text": "ASP.NET MVC web application with modular feature implementation."
+      },
+      {
+        "type": "AI Usage",
+        "text": "None for now (pure full-stack web features)."
+      },
+      {
+        "type": "Tech Stack",
+        "text": "ASP.NET MVC, C#, HTML, CSS, JavaScript."
+      }
+    ]
+  }
+]
