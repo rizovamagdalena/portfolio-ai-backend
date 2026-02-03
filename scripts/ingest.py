@@ -1,9 +1,10 @@
+
 import json
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
-from chromadb.config import Settings
-import chromadb
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
 # -----------------------------
 # Load .env variables
@@ -18,23 +19,23 @@ CHROMA_PERSIST_DIR = os.path.abspath("../data/chroma_db")
 os.makedirs(CHROMA_PERSIST_DIR, exist_ok=True)
 
 # -----------------------------
-# Init the OPENAI client
+# Init embeddings with LangChain
 # -----------------------------
-client = OpenAI(api_key=OPENAI_API_KEY)
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-large",
+    openai_api_key=OPENAI_API_KEY
+)
 
 # -----------------------------
-# Init chroma db
+# Init Chroma with LangChain
 # -----------------------------
-# chroma_client = chromadb.Client(Settings(
-#     persist_directory=CHROMA_PERSIST_DIR
-# ))
+vector_store = Chroma(
+    collection_name="projects_collection",
+    embedding_function=embeddings,
+    persist_directory=CHROMA_PERSIST_DIR
+)
 
-chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-
-
-collection_name = "projects_collection"
-collection = chroma_client.get_or_create_collection(name=collection_name)
-print(f"Using collection: {collection_name}")
+print(f"Using collection: projects_collection")
 
 # -----------------------------
 # Load projects.json file
@@ -47,6 +48,8 @@ print(f"Loaded {len(projects)} projects from {PROJECTS_JSON_PATH}")
 # -----------------------------
 # Ingest
 # -----------------------------
+all_documents = []
+
 for project in projects:
     project_id = project["id"]
     project_name = project["name"]
@@ -58,39 +61,29 @@ for project in projects:
         text = chunk["text"]
         chunk_type = chunk.get("type", "General")
 
-        print(f"  - Generating embedding for chunk {idx} [{chunk_type}]")
+        print(f"  - Preparing chunk {idx} [{chunk_type}]")
 
-        # Generate embedding
-        response = client.embeddings.create(
-            input=text,
-            model="text-embedding-3-large"
-        )
-        embedding = response.data[0].embedding
-
-        # Add to ChromaDB
-        collection.add(
-            ids=[f"{project_id}_{idx}"],
-            embeddings=[embedding],
-            metadatas=[{
+        # Create LangChain Document
+        doc = Document(
+            page_content=text,
+            metadata={
                 "project_id": project_id,
                 "project_name": project_name,
-                "chunk_type": chunk_type
-            }],
-            documents=[text]
+                "chunk_type": chunk_type,
+                "doc_id": f"{project_id}_{idx}"
+            }
         )
 
-        print(f"    ✅ Chunk {idx} added to collection")
-        # -----------------------------
-        # Debug: print total docs in collection
-        # -----------------------------
-        try:
-            all_docs = collection.get(include=["documents", "metadatas"])
-            print(f"    🔹 Collection now has {len(all_docs['documents'])} documents")
-            print(f"    🔹 Last added doc metadata: {all_docs['metadatas'][-1]}")
-            print(f"    🔹 Last added doc text: {all_docs['documents'][-1]}\n")
-        except Exception as e:
-            print("    ⚠️ Could not retrieve collection stats:", e)
+        all_documents.append(doc)
+        print(f"    ✅ Chunk {idx} prepared")
 
-print("Chroma DB path:", CHROMA_PERSIST_DIR)
+# Add all documents to vector store in batch
+print(f"\n📦 Adding {len(all_documents)} documents to vector store...")
+vector_store.add_documents(all_documents)
 
-print("\n🎉 Ingestion complete! ChromaDB is now populated.")
+# -----------------------------
+# Debug: print total docs in collection
+# -----------------------------
+print(f"\n🔹 Collection now has documents stored in: {CHROMA_PERSIST_DIR}")
+
+print("\n🎉 Ingestion complete! ChromaDB is now populated with LangChain.")

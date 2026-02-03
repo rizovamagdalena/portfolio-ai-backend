@@ -1,10 +1,11 @@
 # Project Portfolio RAG API - Backend
 
-FastAPI backend for the Portfolio AI Assistant chatbot using RAG (Retrieval Augmented Generation).
+FastAPI backend for the Portfolio AI Assistant chatbot using RAG (Retrieval Augmented Generation) with LangChain.
 
 ## 🚀 Features
 
 - **Vector Search** - ChromaDB for semantic similarity search
+- **LangChain Integration** - Composable RAG chains and retrievers
 - **AI-Powered Responses** - OpenAI GPT integration
 - **RESTful API** - FastAPI with automatic docs
 - **Project Management** - Query portfolio projects via natural language

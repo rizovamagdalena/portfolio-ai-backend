@@ -1,7 +1,7 @@
 
 import os
-import chromadb
-from openai import OpenAI
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
 
 
 class VectorStore:
@@ -11,59 +11,58 @@ class VectorStore:
         if not self.openai_api_key:
             raise ValueError("Set your OPENAI_API_KEY in .env!")
 
-        # OpenAI client
-        self.client = OpenAI(api_key=self.openai_api_key)
+        # Initialize LangChain embeddings
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-large",
+            openai_api_key=self.openai_api_key
+        )
 
-        # ChromaDB client
-        self.chroma_client = chromadb.PersistentClient(path=persist_dir)
-
-        # Get collection
-        self.collection = self.chroma_client.get_or_create_collection(collection_name)
+        # Initialize LangChain Chroma vector store
+        self.vector_store = Chroma(
+            collection_name=collection_name,
+            embedding_function=self.embeddings,
+            persist_directory=persist_dir
+        )
 
         # DEBUG: print how many documents exist
         self.print_collection_stats()
 
     def print_collection_stats(self):
         try:
-            all_docs = self.collection.get(include=["documents", "metadatas"])
-            print(f"DEBUG: Collection has {len(all_docs['ids'])} documents")
+            # Get collection from the underlying ChromaDB client
+            collection = self.vector_store._collection
+            count = collection.count()
+            print(f"DEBUG: Collection has {count} documents")
         except Exception as e:
             print("DEBUG: Could not retrieve collection stats:", e)
 
     def add_document(self, doc_id: str, text: str, metadata: dict):
-        # Create embedding
-        embedding = self.client.embeddings.create(
-            input=text,
-            model="text-embedding-3-large"
-        ).data[0].embedding
+        from langchain_core.documents import Document
 
-        # Add to ChromaDB
-        self.collection.add(
-            ids=[doc_id],
-            embeddings=[embedding],
-            metadatas=[metadata],
-            documents=[text]
-        )
+        # Add doc_id to metadata
+        metadata["doc_id"] = doc_id
+
+        # Create LangChain Document
+        doc = Document(page_content=text, metadata=metadata)
+
+        # Add to vector store
+        self.vector_store.add_documents([doc])
 
     def query(self, query_text: str, top_k: int = 3, debug: bool = False):
-
-        # Generate query embedding
-        query_embedding = self.client.embeddings.create(
-            input=query_text,
-            model="text-embedding-3-large"
-        ).data[0].embedding
-
-        # Query ChromaDB
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
+        results = self.vector_store.similarity_search_with_score(
+            query_text,
+            k=top_k
         )
 
         if debug:
-            print("DEBUG: Chroma query results:", results)
+            print("DEBUG: LangChain query results:", results)
 
-        # Return documents, metadatas, and distances
-        return results['documents'][0], results['metadatas'][0], results['distances'][0]
+        # Extract documents, metadatas, and distances
+        documents = [doc.page_content for doc, score in results]
+        metadatas = [doc.metadata for doc, score in results]
+        distances = [score for doc, score in results]
+
+        return documents, metadatas, distances
 
     def get_documents_only(self, query_text: str, top_k: int = 3):
         docs, _, _ = self.query(query_text, top_k)
@@ -71,26 +70,29 @@ class VectorStore:
 
     def get_relevant_projects(self, query_text: str, top_k: int = 3):
         _, metadatas, _ = self.query(query_text, top_k)
-
         project_names = set()
         for metadata in metadatas:
             project_names.add(metadata['project_name'])
-
         return list(project_names)
 
     def list_all_projects(self):
         try:
-            all_docs = self.collection.get(include=["metadatas"])
-            projects = {}
+            # Access ChromaDB collection
+            collection = self.vector_store._collection
+            all_docs = collection.get(include=["metadatas"])
 
+            projects = {}
             for metadata in all_docs['metadatas']:
                 project_id = metadata['project_id']
                 project_name = metadata['project_name']
-
                 if project_id not in projects:
                     projects[project_id] = project_name
-
             return projects
         except Exception as e:
             print("Error listing projects:", e)
             return {}
+
+    def as_retriever(self, search_kwargs: dict = None):
+        if search_kwargs is None:
+            search_kwargs = {"k": 3}
+        return self.vector_store.as_retriever(search_kwargs=search_kwargs)
